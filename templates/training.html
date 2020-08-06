@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Training{% endblock %}
+{% block content %}
+    <h1>Prometheus and Grafana Integration Training</h1>
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="headingOne">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Step 1: Exposing Metrics
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    <p>
+                        Implementing your own custom metrics for your application is relatively straightforward. </br>
+                        Please follow <a href="https://prometheus.io/docs/concepts/metric_types/">this guide</a> to implement the appropriate metric types for your project.</br>
+                    </p>
+                    Here is a quick example of collecting metrics, from this application, in python:
+                    <pre>
+                        <code>
+from flask import Flask, render_template, redirect, url_for
+from prometheus_client import generate_latest, REGISTRY, Counter, Gauge, Histogram
+from survey.form import SurveyForm
+
+
+application = Flask(__name__)
+
+
+REQUESTS = Counter('http_requests_total', 'Total HTTP Requests (count)', ['method', 'endpoint', 'status_code'])
+IN_PROGRESS = Gauge('http_requests_inprogress', 'Number of in progress HTTP requests')
+TIMINGS = Histogram('http_request_duration_seconds', 'HTTP request latency (seconds)')
+RESULTS = Counter('form_results', 'Response counter per question', ['question', 'answer'])
+
+
+@application.route('/')
+@TIMINGS.time()
+@IN_PROGRESS.track_inprogress()
+def index():
+    REQUESTS.labels(method='GET', endpoint='/', status_code=200).inc()
+    return render_template('index.html')
+
+
+@application.route('/form', methods=['GET', 'POST'])
+@TIMINGS.time()
+@IN_PROGRESS.track_inprogress()
+def form():
+    REQUESTS.labels(method='GET', endpoint='/form/', status_code=200).inc()
+    local_form = SurveyForm()
+    if local_form.validate_on_submit():
+        RESULTS.labels(question='role', answer=local_form.user_role.data).inc()
+        RESULTS.labels(question='prometheus_experience', answer=local_form.prom_used.data).inc()
+        RESULTS.labels(question='prometheus_learning', answer=local_form.prom_case.data).inc()
+        RESULTS.labels(question='prometheus_in_use', answer=local_form.prom_using.data).inc()
+        RESULTS.labels(question='promehteus_metrics_exposed', answer=local_form.prom_metrics.data).inc()
+        RESULTS.labels(question='grafana_in_use', answer=local_form.grafana_using.data).inc()
+        RESULTS.labels(question='grafana_experience', answer=local_form.grafana_used.data).inc()
+        return redirect(url_for('training'))
+    return render_template('form.html', form=local_form)
+                        </code>
+                    </pre>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="headingTwo">
+                <h5 class="mb-0">
+                    <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        Step 2: Scraping with Prometheus
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                <div class="card-body">
+                    <p>
+                        Because Prometheus is a pull based system we need to configure it to scrape your metrics endpoint.
+                        There are several methods to do this dynamically but the easiest and most straightforward is the <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config">static scrape config</a>.
+                        Please see your monitoring team for more specific examples of how to get your metrics ingested.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="headingThree">
+                <h5 class="mb-0">
+                    <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        Step 3: Grafana Integration
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                <div class="card-body">
+                    All that is needed here is to simply add your prometheus instance to grafana as a datasource. Add any needed credentials or headers to authenticate where needed. </br>
+                    This is all outlined very well in the <a href="https://prometheus.io/docs/visualization/grafana/">Prometheus documentation</a>.
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" id="headingFour">
+                <h5 class="mb-0">
+                    <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                        Step 4: Dashboards
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
+                <div class="card-body">
+                    Once you have a reasonable grasp on <a href="https://prometheus.io/docs/prometheus/latest/querying/basics/">PromQL</a> all you need to do is add that query to your <a href="https://grafana.com/docs/grafana/latest/features/dashboard/dashboards/">Grafana dashboard</a>.
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
