@@ -3,6 +3,12 @@ from prometheus_client import generate_latest, REGISTRY, Counter, Gauge, Histogr
 from survey.form import SurveyForm
 
 
+def random_key():
+    import random
+    import string
+    return ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(32))
+
+
 application = Flask(__name__)
 application.config['SECRET_KEY'] = random_key()
 
@@ -61,12 +67,6 @@ def training():
 def page_not_found(e):
     REQUESTS.labels(method='GET', endpoint='404', status_code=400).inc()
     return render_template('404.html', e=e), 404
-
-
-def random_key():
-    import random
-    import string
-    return ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(32))
 
 
 if __name__ == "__main__":
