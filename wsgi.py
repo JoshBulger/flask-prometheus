@@ -4,6 +4,7 @@ from survey.form import SurveyForm
 
 
 application = Flask(__name__)
+application.config['SECRET_KEY'] = random_key()
 
 
 REQUESTS = Counter('http_requests_total', 'Total HTTP Requests (count)', ['method', 'endpoint', 'status_code'])
@@ -70,9 +71,6 @@ def random_key():
 
 if __name__ == "__main__":
     import os
-    application.config.update(
-        SECRET_KEY= os.getenv('SECRET_KEY') or random_key()
-    )
     application.run(
         host='0.0.0.0',
         debug=True
